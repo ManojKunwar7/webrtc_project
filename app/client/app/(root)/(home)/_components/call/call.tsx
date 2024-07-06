@@ -8,7 +8,6 @@ import { toast } from "sonner";
 const CallComponent = () => {
   const { socket, setCallers , setIsCalling}: any = useContext(SocketContext);
   const [callerId, setCallerId] = useState("");
-  console.log("socket", socket);
 
   const CallHandler = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();

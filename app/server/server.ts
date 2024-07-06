@@ -3,7 +3,7 @@ import express, { Request, Response } from "express";
 import { Server as SocketServer } from "socket.io";
 import cors from "cors";
 
-const app = express();
+export const app = express();
 const PORT = 4500;
 
 app.use(cors());
@@ -20,9 +20,16 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 export const io = new SocketServer(httpServer, {
-  cors:{
+  cors: {
     origin: "*",
   }
 });
 
+// * Database
+import "./db/redis/redis.conn"
+
+// * Socket 
 import "./socket/socket";
+
+// * Routes
+import "./api/root_routes"
