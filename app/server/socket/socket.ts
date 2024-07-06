@@ -2,7 +2,6 @@ import { io } from "../server";
 
 io.on("connection", (socket) => {
   console.log("Connection started", socket.id);
-  socket.emit("message", "hey lavdu");
   socket.on("connect", () => {
     console.log("Connection started 1", socket.id);
   });

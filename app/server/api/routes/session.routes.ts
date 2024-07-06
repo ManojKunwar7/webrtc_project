@@ -1,24 +1,61 @@
 import express, { Request, Response } from "express";
 import { redisClient } from "../../db/redis/redis.conn";
+import { sendMail } from "../../modules/mail";
 
 export const router = express.Router();
 
+router.post("/login", async (req: Request, res: Response) => {
+  try {
+    interface loginInterface {
+      email: string
+    }
 
-router.post("/login", )
+    type sendMailInterface = {
+      address: string,
+      name: string
+    }[]
+
+    type mailSendRespInterface = {
+      status: boolean,
+      data: any,
+      alert_status: string,
+      c_msg: string
+    }
+
+    const reqBody: loginInterface = req.body
+    const { email } = reqBody
+    if (!email) {
+      return res.status(400).json({ status: false, data: [], c_msg: `Please enter a mail!`, alert_status: "error" })
+    }
+    const to: sendMailInterface = [{
+      name: "user",
+      address: email
+    }]
+    const OTP: number = Math.floor(100_000 + Math.random() * 900_000);
+    const sendMailResp: mailSendRespInterface = await sendMail({ to, bcc: "", html: "", subject: "OTP for login", text: `The otp is ${OTP}` })
+    if (sendMailResp.status) {
+
+    }
+    return res.status(200).json({ status: true, data: [{ status: "true" }], c_msg: `Mail sent to ${email}!`, alert_status: "success" })
+  } catch (err) {
+    console.log("/users/list err", err);
+    return res.status(500).json({ status: false, data: [], c_msg: "Internal server error!", alert_status: 'error' });
+  }
+})
 
 
 
 router.get("/users/list", async (req: Request, res: Response) => {
   try {
     const getOnlineUserList = await redisClient.json.get("online-user")
-    if(!getOnlineUserList?.length){
-      return res.status(400).json({status: false , data:[], alert_status: "error", c_msg: "No users is online!"})
+    if (!getOnlineUserList?.length) {
+      return res.status(400).json({ status: false, data: [], alert_status: "error", c_msg: "No users is online!" })
     }
-    return res.status(200).json({status: true , data:getOnlineUserList, alert_status: "success", c_msg: "List retrieved!"})
+    return res.status(200).json({ status: true, data: getOnlineUserList, alert_status: "success", c_msg: "List retrieved!" })
   } catch (err) {
     console.log("/users/list err", err);
     return res.status(500).json({ status: false, data: [], c_msg: "Internal server error!", alert_status: 'error' });
-  } 
+  }
 })
 
 interface setOnlineUserInterface {
