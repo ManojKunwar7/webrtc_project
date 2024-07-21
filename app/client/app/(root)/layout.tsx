@@ -1,7 +1,6 @@
 import { ModeToggle } from "@/components/ui/mode-toggle";
 import { Favorite } from "@mui/icons-material";
 import { ReactNode } from "react";
-import { Toaster } from "sonner";
 import CallNotify from "./(home)/_components/call-notify/call-notify";
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
@@ -19,7 +18,6 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
         </p>
       </div>
       <CallNotify />
-      <Toaster />
     </div>
   );
 };
