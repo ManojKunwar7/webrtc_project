@@ -1,19 +1,20 @@
 "use client"
 import React, { useContext, useEffect, useState } from 'react'
 import VideoItem from "./video-item"
-import { SocketContext, iceServers, streamConstraints } from '@/context/socket/socket.Context';
+import { SocketContext } from '@/context/socket/socket.context';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { streamConstraints, iceServers } from '@/modules/constant';
 
 const VideoPanel = (props: any) => {
   const router = useRouter()
   const { inCall, setInCall, room, socket, localStream, setLocalStream, remoteStream, setRemoteStream, rtcPeerConnection, setRtcPeerConnection, dataChannel, setDataChannel, dataChannelMsg, setDataChannelMsg }: any = useContext(SocketContext)
-  console.log("room", room);
   useEffect(() => {
-    if (!inCall) {
+    if (!localStream && !inCall) {
+      console.log(" checking", localStream);
       router.push("/omegle");
     }
-  }, [inCall, router, setInCall])
+  }, [inCall, localStream, router, setInCall, setLocalStream])
 
   const getPermission = async () => {
     try {
@@ -29,10 +30,8 @@ const VideoPanel = (props: any) => {
 
   useEffect(() => {
     if (!socket) return
-    socket.on("mesh:ready", async () => {
+    const onReady = () => {
       try {
-        const streamResp: any = await getPermission();
-        setLocalStream(streamResp);
         // const rtcPeerConnectionInstance = new window.RTCPeerConnection({ iceServers: iceServers.iceServer });
         // rtcPeerConnectionInstance.onicecandidate = onIceCandidate;
         // rtcPeerConnectionInstance.ontrack = onAddStream;
@@ -49,16 +48,23 @@ const VideoPanel = (props: any) => {
         //     })
         //   });
         // })
-        rtcPeerConnection.onicecandidate = onIceCandidate;
-        rtcPeerConnection.ontrack = onAddStream;
-        console.log('localStream mesh:ready', streamResp);
-        rtcPeerConnection.addTrack(streamResp.getTracks()[0], streamResp);
-        rtcPeerConnection.addTrack(streamResp.getTracks()[1], streamResp);
-        let dc: any = rtcPeerConnection.createDataChannel(room)
-        dc.onmessage = onDataMessage
-        setDataChannel(dc)
+        // console.log('localStream mesh:ready', streamResp);
+
+        // let dc: any = rtcPeerConnection.createDataChannel(room)
+        // dc.onmessage = onDataMessage
+        // setDataChannel(dc)
+
         rtcPeerConnection.createOffer().then((sdp: any) => {
+          console.log("here 2");
+
+          rtcPeerConnection.onicecandidate = onIceCandidate;
+          rtcPeerConnection.ontrack = onAddStream;
+          rtcPeerConnection.addTrack(localStream.getTracks()[0], localStream);
+          rtcPeerConnection.addTrack(localStream.getTracks()[1], localStream);
           rtcPeerConnection.setLocalDescription(sdp).then(() => {
+            rtcPeerConnection.onnegotiationneeded = (e: any) => {
+              if (rtcPeerConnection.signalingState != "stable") return;
+            }
             setRtcPeerConnection((prev: any) => (rtcPeerConnection));
             socket.emit("mesh:offer", {
               type: "offer",
@@ -70,15 +76,14 @@ const VideoPanel = (props: any) => {
       } catch (err) {
         console.log("mesh:ready", err);
       }
-    })
+    }
+    socket.on("mesh:ready", async () => onReady);
 
-
-    socket.on("mesh:offer", async (offer: any) => {
+    const onOffer = (offer: any) => {
       try {
-        console.log("offer mesh offer", offer);
         // setLocalStream
-        const streamResp: any = await getPermission();
-        setLocalStream(streamResp);
+        // const streamResp: any = await getPermission();
+        // setLocalStream(streamResp);
         // const rtcPeerConnectionInstance = new RTCPeerConnection({ iceServers: iceServers.iceServer });
         // rtcPeerConnectionInstance.ontrack = onAddStream;
         // rtcPeerConnectionInstance.onicecandidate = onIceCandidate;
@@ -101,22 +106,29 @@ const VideoPanel = (props: any) => {
         //     })
         //   }).catch(error => console.log("rtcPeerConnectionInstance.createAnswer", error))
         // }).catch(error => console.log("rtcPeerConnectionInstance.setRemoteDescription", error))
-        rtcPeerConnection.ontrack = onAddStream;
-        rtcPeerConnection.onicecandidate = onIceCandidate;
-        rtcPeerConnection.addTrack(streamResp.getTracks()[0], streamResp);
-        rtcPeerConnection.addTrack(streamResp.getTracks()[1], streamResp);
+
         // await rtcPeerConnectionInstance.setRemoteDescription(new RTCSessionDescription(offer));
         // const sdp = await rtcPeerConnectionInstance.createAnswer()
         // await rtcPeerConnectionInstance.setLocalDescription(sdp);
         // console.log("create answer:sdp",sdp);
-        rtcPeerConnection.ondatachannel = (event:any)=>{
-          let dc = event.chanel;
-          dc.onmessage = 
-          setDataChannel(dc)
-        }
+
+
+        // rtcPeerConnection.ondatachannel = (event:any)=>{
+        //   let dc = event.chanel;
+        //   dc.onmessage = 
+        //   setDataChannel(dc)
+        // }
 
         rtcPeerConnection.setRemoteDescription(new RTCSessionDescription(offer)).then(() => {
+          console.log("here 1");
+          rtcPeerConnection.ontrack = onAddStream;
+          rtcPeerConnection.onicecandidate = onIceCandidate;
+          rtcPeerConnection.addTrack(localStream.getTracks()[0], localStream);
+          rtcPeerConnection.addTrack(localStream.getTracks()[1], localStream);
           rtcPeerConnection.createAnswer().then((sdp: any) => {
+            rtcPeerConnection.onnegotiationneeded = (e: any) => {
+              if (rtcPeerConnection.signalingState != "stable") return;
+            }
             rtcPeerConnection.setLocalDescription(sdp).then(() => {
               setRtcPeerConnection((prev: any) => (rtcPeerConnection));
               socket.emit("mesh:answer", {
@@ -128,28 +140,43 @@ const VideoPanel = (props: any) => {
           }).catch((error: any) => console.log("rtcPeerConnectionInstance.createAnswer", error))
         }).catch((error: any) => console.log("rtcPeerConnectionInstance.setRemoteDescription", error))
 
-      
+
       } catch (err) {
         console.log("mesh:offer", err);
       }
-    })
+    }
 
+    socket.on("mesh:offer", async (offer: any) => { onOffer(offer) })
 
-    socket.on("mesh:answer", async (sdp: any) => {
-      if (!rtcPeerConnection) return
-      if (!sdp) return
-      await rtcPeerConnection?.setRemoteDescription(new RTCSessionDescription(sdp));
-    })
-
-    socket.on("mesh:candidate", async (event: any) => {
-      if (!rtcPeerConnection) return
-      const candidate = new RTCIceCandidate({
-        candidate: event.candidate,
-        sdpMLineIndex: event.label
+    const onAnswer = (sdp: any) => {
+      return new Promise(async (resolve, reject) => {
+        if (!rtcPeerConnection) return reject({ status: false });
+        if (!sdp) return reject({ status: false });
+        rtcPeerConnection?.setRemoteDescription(new RTCSessionDescription(sdp)).then(() => {
+          return resolve({ status: true })
+        }).catch((err: any) => {
+          return reject(err);
+        });
       })
-      if (!candidate) return
-      await rtcPeerConnection.addIceCandidate(candidate);
-    })
+    }
+
+    socket.on("mesh:answer", async (sdp: any) => { onAnswer(sdp) })
+    const onCandidate = (event: any) => {
+      return new Promise(async (resolve, reject) => {
+        if (!rtcPeerConnection) return reject({ status: false });
+        const candidate = new RTCIceCandidate({
+          candidate: event.candidate,
+          sdpMLineIndex: event.label
+        })
+        if (!candidate) return
+        rtcPeerConnection.addIceCandidate(candidate).then(() => {
+          return resolve({ status: true })
+        }).catch((err: any) => {
+          return reject(err);
+        });
+      })
+    }
+    socket.on("mesh:candidate", async (event: any) => (onCandidate(event)))
 
     const onAddStream = (event: any) => {
       setRemoteStream(event.streams[0])
@@ -175,9 +202,11 @@ const VideoPanel = (props: any) => {
       setDataChannelMsg((prev: any) => ([...prev, event.data]))
     }
     // return () => {
-    //   socket.disconnect();
+    //   socket.off("mesh:ready", async () => onReady);
+    //   socket.off("mesh:offer", async (offer: any) => {onOffer(offer)})
+    //   socket.off("mesh:candidate", async (event: any) => ( onCandidate(event)))
     // };
-  }, [socket, localStream, room, rtcPeerConnection, setRtcPeerConnection, setRemoteStream, setLocalStream, setDataChannel, setDataChannelMsg])
+  }, [localStream, room, rtcPeerConnection, setDataChannelMsg, setRemoteStream, setRtcPeerConnection, socket])
 
   return (
     <div className='w-[50%] h-full border flex flex-col gap-1 p-2'>

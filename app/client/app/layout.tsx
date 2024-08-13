@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/context/themeContext/theme-provider";
-import { SocketWrapper } from "@/context/socket/socket.Context";
+import { SocketContextProvider, SocketWrapper } from "@/context/socket/socket.context";
 import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -32,7 +32,8 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <SocketWrapper>{children}</SocketWrapper>
+          {/* <SocketWrapper>{children}</SocketWrapper> */}
+          <SocketContextProvider>{children}</SocketContextProvider>
           <Toaster closeButton theme="system" />
         </ThemeProvider>
       </body>

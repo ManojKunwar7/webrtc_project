@@ -1,7 +1,7 @@
 "use client"
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { SocketContext } from '@/context/socket/socket.Context'
+import { SocketContext } from '@/context/socket/socket.context'
 import { Send } from '@mui/icons-material'
 import React, { useContext, useState } from 'react'
 import { toast } from 'sonner'

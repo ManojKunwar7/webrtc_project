@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { SocketContext } from "@/context/socket/socket.Context";
+import { SocketContext } from "@/context/socket/socket.context";
 import { useContext, useEffect, useState } from "react";
 
 const CallNotify = () => {

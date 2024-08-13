@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SocketContext } from "@/context/socket/socket.Context";
+import { SocketContext } from "@/context/socket/socket.context";
 import React, { useContext, useState } from "react";
 import { toast } from "sonner";
 

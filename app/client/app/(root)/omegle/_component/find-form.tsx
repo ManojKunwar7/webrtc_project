@@ -3,8 +3,9 @@ import React, { useContext, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { SocketContext, streamConstraints } from "@/context/socket/socket.Context";
+import { SocketContext } from "@/context/socket/socket.context";
 import { usePathname } from "next/navigation";
+import { streamConstraints } from "@/modules/constant";
 
 
 
@@ -19,8 +20,8 @@ const FindRoomForm = () => {
         toast("Room name cannot be empty!",)
         return;
       }
-      // const streamResp = await getPermission();
-      // setLocalStream(streamResp);
+      const streamResp = await getPermission();
+      setLocalStream(streamResp);
       setInCall(true);
       socket.emit("mesh:createOrJoinRoom", { room: room, username })
     } catch (err) {
@@ -29,21 +30,23 @@ const FindRoomForm = () => {
     }
   }
 
-  // const getPermission = async () => {
-  //   try {
-  //     const streamResp = await navigator.mediaDevices.getUserMedia(streamConstraints);
-  //     return streamResp;
-  //   } catch (err) {
-  //     console.log("err: unable to get user media permission", err)
-  //     toast("Allow access camera and audio option!")
-  //     return null;
-  //   }
-  // }
+  const getPermission = async () => {
+    try {
+      const streamResp = await navigator.mediaDevices.getUserMedia(streamConstraints);
+      return streamResp;
+    } catch (err) {
+      console.log("err: unable to get user media permission", err)
+      toast("Allow access camera and audio option!")
+      return null;
+    }
+  }
 
 
   useEffect(() => {
     const init = async () => {
       if (pathname == "/omegle" && localStream) {
+        console.log("here", localStream);
+        
         localStream?.getTracks().forEach(function (track: any) {
           track.stop();
         });
@@ -52,7 +55,7 @@ const FindRoomForm = () => {
       };
     }
     init();
-  }, [localStream,inCall, pathname, setInCall, setLocalStream]);
+  }, []);
 
 
   return (

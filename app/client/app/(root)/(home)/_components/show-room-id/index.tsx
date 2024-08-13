@@ -1,6 +1,6 @@
 "use client"
 
-import { SocketContext } from '@/context/socket/socket.Context'
+import { SocketContext } from '@/context/socket/socket.context'
 import React, { useContext, useEffect, useState } from 'react'
 
 const ShowRoomId = () => {
